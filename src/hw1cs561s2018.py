@@ -1,12 +1,13 @@
 class Configuration:
     def __init__(self, path):
-        with open(path) as f:
-            file_lines = f.read().splitlines()
-            self.player = file_lines[0]
-            self.algorithm = file_lines[1]
-            self.depth_limit = int(file_lines[2])
-            self.initial_state = Board(pieces=None, map=[line.split(',') for line in file_lines[3:11]])
-            self.row_values = map(int, file_lines[11].split(','))
+        if path:
+            with open(path) as f:
+                file_lines = f.read().splitlines()
+                self.player = file_lines[0][0].upper()
+                self.algorithm = file_lines[1]
+                self.depth_limit = int(file_lines[2])
+                self.initial_state = Board(pieces=None, map=[line.split(',') for line in file_lines[3:11]])
+                self.row_values = map(int, file_lines[11].split(','))
 
 
 class Piece:
@@ -35,3 +36,20 @@ class Board:
                         for k in range(number):
                             piece = Piece(map[i][j][0], (i, j))
                             self.pieces.append(piece)
+
+
+class Utility:
+    def evaluation(self, config, board):
+        player = config.player
+        utility_value = 0
+        for piece in board.pieces:
+            row = piece.coor[0]
+            if piece.type == "S":
+                utility = config.row_values[7 - row]
+            else:
+                utility = config.row_values[row]
+            if piece.type == player:
+                utility_value += utility
+            else:
+                utility_value -= utility
+        return utility_value
