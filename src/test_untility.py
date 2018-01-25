@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from hw1cs561s2018 import Board
+from hw1cs561s2018 import Board, evaluation
 from hw1cs561s2018 import Configuration
 from hw1cs561s2018 import Utility
 
@@ -21,8 +21,11 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = Utility().evaluation(self.configuration, board)
+        utility = evaluation(self.configuration, board)
         self.assertEqual(120, utility)
+        s1 = [x for x in board.pieces if x.coor == (0, 1)]
+        c1 = [x for x in board.pieces if x.coor == Utility.right_down(s1[0].coor)]
+        self.assertEqual((1, 2), c1[0].coor)
 
     def test_evaluation2(self):
         board = Board(pieces=None, map=[
@@ -35,8 +38,10 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = Utility().evaluation(self.configuration, board)
+        utility = evaluation(self.configuration, board)
         self.assertEqual(160, utility)
+        s1 = [x for x in board.pieces if x.coor == (0, 1)]
+        self.assertEqual("0", board.map[Utility.right_down(s1[0].coor)[0]][Utility.right_down(s1[0].coor)[1]])
 
     def test_evaluation3(self):
         board = Board(pieces=None, map=[
@@ -49,7 +54,7 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = Utility().evaluation(self.configuration, board)
+        utility = evaluation(self.configuration, board)
         self.assertEqual(130, utility)
 
     def test_evaluation4(self):
@@ -66,7 +71,7 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = Utility().evaluation(config, board)
+        utility = evaluation(config, board)
         self.assertEqual(-290, utility)
 
     def test_evaluation5(self):
@@ -83,5 +88,5 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = Utility().evaluation(config, board)
+        utility = evaluation(config, board)
         self.assertEqual(368, utility)

@@ -44,18 +44,74 @@ class Board:
         return len(Counter(map(lambda p: p.type, self.pieces)).keys()) == 1
 
 
+def evaluation(config, board):
+    player = config.player
+    utility_value = 0
+    for piece in board.pieces:
+        row = piece.coor[0]
+        if piece.type == "S":
+            utility = config.row_values[7 - row]
+        else:
+            utility = config.row_values[row]
+        if piece.type == player:
+            utility_value += utility
+        else:
+            utility_value -= utility
+    return utility_value
+
+
 class Utility:
-    def evaluation(self, config, board):
-        player = config.player
-        utility_value = 0
-        for piece in board.pieces:
-            row = piece.coor[0]
-            if piece.type == "S":
-                utility = config.row_values[7 - row]
-            else:
-                utility = config.row_values[row]
-            if piece.type == player:
-                utility_value += utility
-            else:
-                utility_value -= utility
-        return utility_value
+
+    @staticmethod
+    def left_down(coor):
+        return coor[0] - 1, coor[1] + 1
+
+    @staticmethod
+    def right_down(coor):
+        return coor[0] + 1, coor[1] + 1
+
+    @staticmethod
+    def left_up(coor):
+        return coor[0] - 1, coor[1] - 1
+
+    @staticmethod
+    def right_up(coor):
+        return coor[0] + 1, coor[1] - 1
+
+    @staticmethod
+    def action(board, player):
+        pieces = filter(lambda p: p.type == player, board.pieces)
+        map = board.map
+        for p in pieces:
+            coor = p.coor
+            left_down = Utility.left_down(coor)
+            right_down = Utility.right_down(coor)
+            left_up = Utility.left_up(coor)
+            right_up = Utility.right_up(coor)
+            if player == "S":
+                '''
+                        S
+                       0 0
+                '''
+                if map[left_down[0]][left_down[1]] == 0:  # left down corner
+                    pass
+                if map[right_down[0]][right_down[1]] == 0:  # right down corner
+                    pass
+                if "C" in map[left_down[0]][left_down[1]]:  # eat and jump
+                    pass
+                if "C" in map[right_down[0]][right_down[1]]:  # eat and jump
+                    pass
+
+            if player == "C":
+                '''
+                       0 0
+                        C    
+                '''
+                if map[left_up[0]][left_up[1]] == 0:
+                    pass
+                if map[right_up[0]][right_up[1]] == 0:
+                    pass
+                if "S" in map[left_up[0]][left_up[1]]:
+                    pass
+                if "S" in map[right_up[0]][right_up[1]]:
+                    pass
