@@ -10,7 +10,7 @@ class TestConfiguration(TestCase):
 
     def test_read_file1(self):
         configuration = Configuration("../res/test_case_1.txt")
-        self.assertEqual(configuration.player, "Star")
+        self.assertEqual(configuration.player, "S")
         self.assertEqual(configuration.algorithm, "MINIMAX")
         self.assertEqual(configuration.depth_limit, 2)
         self.assertEqual(configuration.row_values, [10, 20, 30, 40, 50, 60, 70, 80])
@@ -41,7 +41,7 @@ class TestConfiguration(TestCase):
 
     def test_read_file2(self):
         configuration = Configuration("../res/test_case_2.txt")
-        self.assertEqual(configuration.player, "Circle")
+        self.assertEqual(configuration.player, "C")
         self.assertEqual(configuration.algorithm, "ALPHABETA")
         self.assertEqual(configuration.depth_limit, 2)
         self.assertEqual(configuration.row_values, [10, 20, 30, 40, 50, 60, 70, 80])
@@ -56,7 +56,3 @@ class TestConfiguration(TestCase):
         self.assertTrue(piece3 in configuration.initial_state.pieces)
         self.assertTrue(piece4 in configuration.initial_state.pieces)
         self.assertTrue(piece5 in configuration.initial_state.pieces)
-
-
-if __name__ == '__main__':
-    TestCase.main()
