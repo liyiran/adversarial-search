@@ -56,5 +56,3 @@ class TestConfiguration(TestCase):
         self.assertTrue(piece3 in configuration.initial_state.pieces)
         self.assertTrue(piece4 in configuration.initial_state.pieces)
         self.assertTrue(piece5 in configuration.initial_state.pieces)
-
-

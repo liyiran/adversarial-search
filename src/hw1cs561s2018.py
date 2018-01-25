@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 class Configuration:
     def __init__(self, path):
         if path:
@@ -32,10 +35,13 @@ class Board:
             for i in range(len(map)):
                 for j in range(len(map[i])):
                     if "S" in map[i][j] or "C" in map[i][j]:
-                        number = int(map[i][j][1])
+                        number = int(map[i][j][1:])
                         for k in range(number):
                             piece = Piece(map[i][j][0], (i, j))
                             self.pieces.append(piece)
+
+    def is_only_one_play(self):
+        return len(Counter(map(lambda p: p.type, self.pieces)).keys()) == 1
 
 
 class Utility:
