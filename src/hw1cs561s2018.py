@@ -1,9 +1,11 @@
 import random
 from collections import Counter
 from collections import namedtuple
+from copy import deepcopy
 
 infinity = float('inf')
 GameState = namedtuple('GameState', 'to_move, utility, board, moves')
+Action = namedtuple('Action', 'action_name, new_state')
 '''
 
 # ______________________________________________________________________________
@@ -333,6 +335,24 @@ class Utility:
         return coor[0] - 2, coor[1] + 2
 
     @staticmethod
+    def result(self, state, move):
+        pass
+
+    @staticmethod
+    def move_piece(board, coor, old_piece):
+        new_board = deepcopy(board)
+        new_board.map[old_piece.coor[0]][old_piece.coor[1]] = '0'
+        position = new_board.map[coor[0]][coor[1]]
+        if position == '0':
+            new_board.map[coor[0]][coor[1]] = old_piece.type
+        else:
+            new_board.map[coor[0]][coor[1]] = old_piece.type + str(int(position[1:]) + 1)
+        piece = deepcopy(old_piece)
+        piece.coor = coor
+        new_board.pieces = filter(lambda p: p.coor != coor, board.pieces).append(piece)
+        return new_board
+
+    @staticmethod
     def action(board, player):
         pieces = filter(lambda p: p.type == player, board.pieces)
         action_list = []
@@ -348,28 +368,39 @@ class Utility:
                        0 0
                 '''
                 if board.get_element(left_down) == '0' or board.on_boarder(left_down):  # left down corner
-                    action_list.append((p, "ld"))
+                    # action should be a tuple,(action name, new board)
+                    action_name = (coor, left_down)
+                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, left_down, p)))
+
                 if board.get_element(right_down) == '0' or board.on_boarder(right_down):  # right down corner
-                    action_list.append((p, "rd"))
+                    action_name = (coor, right_down)
+                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, right_down, p)))
+
                 left_down_down = Utility.left_down_down(coor)
                 if "S" in board.get_element(left_down) and (board.get_element(left_down_down) == '0' or board.on_boarder(left_down_down)):  # eat and jump
-                    action_list.append((p, "led"))  # left eat down
+                    action_name = (coor, left_down_down)
+                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, left_down_down, p)))  # left eat down
                 right_down_down = Utility.right_down_down(coor)
                 if "S" in board.get_element(right_down) and (board.get_element(right_down_down) == '0' or board.on_boarder(right_down_down)):  # eat and jump
-                    action_list.append((p, "red"))  # right eat down
+                    action_name = (coor, right_down_down)
+                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, right_down_down, p)))  # right eat down
             if player == "S":
                 '''
                        0 0
                         S
                 '''
                 if board.get_element(left_up) == '0' or board.on_boarder(left_up):
-                    action_list.append((p, "lu"))
+                    action_name = (coor, left_up)
+                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, left_up, p)))
                 if board.get_element(right_up) == '0' or board.on_boarder(right_up):
-                    action_list.append((p, "ru"))
+                    action_name = (coor, right_up)
+                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, right_up, p)))
                 left_up_up = Utility.left_up_up(coor)
                 if "C" in board.get_element(left_up) and (board.get_element(left_up_up) == '0' or board.on_boarder(left_up_up)):
-                    action_list.append((p, "leu"))
+                    action_name = (coor, left_up_up)
+                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, left_up_up, p)))
                 right_up_up = Utility.right_up_up(coor)
                 if "C" in board.get_element(right_up) and (board.get_element(right_up_up) == '0' or board.on_boarder(right_up_up)):
-                    action_list.append((p, "reu"))
+                    action_name = (coor, right_up_up)
+                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, right_up_up, p)))
         return action_list

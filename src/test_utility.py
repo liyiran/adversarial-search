@@ -28,6 +28,8 @@ class TestUtility(TestCase):
         self.assertEqual((1, 2), c1[0].coor)
         action_list = Utility.action(board, "S")
         self.assertEqual(2, len(action_list))
+        self.assertEqual(((2, 3), (1, 4)), action_list[0].action_name)
+        self.assertEqual(((2, 3), (0, 1)), action_list[1].action_name)
 
     def test_evaluation2(self):
         board = Board(pieces=None, map=[
@@ -78,6 +80,7 @@ class TestUtility(TestCase):
         self.assertEqual(160 + 70 - 20 - 30, utility)
         action_list = Utility.action(board, "S")
         self.assertEqual(1, len(action_list))
+        self.assertEqual(((1, 0), (0, 1)), action_list[0].action_name)
 
     def test_evaluation4(self):
         config = Configuration(path=None)
