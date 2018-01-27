@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from hw1cs561s2018 import Board, evaluation
+from hw1cs561s2018 import Board
 from hw1cs561s2018 import Configuration
 from hw1cs561s2018 import Utility
 
@@ -21,11 +21,13 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = evaluation(self.configuration, board)
+        utility = board.evaluation(self.configuration, None)
         self.assertEqual(120, utility)
         s1 = [x for x in board.pieces if x.coor == (0, 1)]
         c1 = [x for x in board.pieces if x.coor == Utility.right_down(s1[0].coor)]
         self.assertEqual((1, 2), c1[0].coor)
+        action_list = Utility.action(board, "S")
+        self.assertEqual(2, len(action_list))
 
     def test_evaluation2(self):
         board = Board(pieces=None, map=[
@@ -38,10 +40,12 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = evaluation(self.configuration, board)
+        utility = board.evaluation(self.configuration, None)
         self.assertEqual(160, utility)
         s1 = [x for x in board.pieces if x.coor == (0, 1)]
         self.assertEqual("0", board.map[Utility.right_down(s1[0].coor)[0]][Utility.right_down(s1[0].coor)[1]])
+        action_list = Utility.action(board, "S")
+        self.assertEqual(0, len(action_list))
 
     def test_evaluation3(self):
         board = Board(pieces=None, map=[
@@ -54,8 +58,26 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = evaluation(self.configuration, board)
+        utility = board.evaluation(self.configuration, None)
         self.assertEqual(130, utility)
+        action_list = Utility.action(board, "S")
+        self.assertEqual(0, len(action_list))
+
+    def test_evaluation3_1(self):
+        board = Board(pieces=None, map=[
+            ['0', 'S2', '0', '0', '0', '0', '0', '0'],
+            ['S1', '0', 'C1', '0', '0', '0', '0', '0'],
+            ['0', '0', '0', '0', '0', '0', '0', 'C1'],
+            ['0', '0', '0', '0', '0', '0', '0', '0'],
+            ['0', '0', '0', '0', '0', '0', '0', '0'],
+            ['0', '0', '0', '0', '0', '0', '0', '0'],
+            ['0', '0', '0', '0', '0', '0', '0', '0'],
+            ['0', '0', '0', '0', '0', '0', '0', '0']
+        ])
+        utility = board.evaluation(self.configuration, None)
+        self.assertEqual(160 + 70 - 20 - 30, utility)
+        action_list = Utility.action(board, "S")
+        self.assertEqual(1, len(action_list))
 
     def test_evaluation4(self):
         config = Configuration(path=None)
@@ -71,8 +93,10 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = evaluation(config, board)
+        utility = board.evaluation(config, None)
         self.assertEqual(-290, utility)
+        action_list = Utility.action(board, "S")
+        self.assertEqual(3, len(action_list))
 
     def test_evaluation5(self):
         config = Configuration(path=None)
@@ -88,5 +112,7 @@ class TestUtility(TestCase):
             ['0', '0', '0', '0', '0', '0', '0', '0'],
             ['0', '0', '0', '0', '0', '0', '0', '0']
         ])
-        utility = evaluation(config, board)
+        utility = board.evaluation(config, None)
         self.assertEqual(368, utility)
+        action_list = Utility.action(board, "S")
+        self.assertEqual(0, len(action_list))
