@@ -4,16 +4,18 @@ from collections import namedtuple
 # Minimax Search
 infinity = float('inf')
 NOOP = 'Noop'
+node_counter = 1
 
 
-def minimax_decision(state, game):
+def minimax_decision(state, game, depth_limit=infinity):
     """Given a state in a game, calculate the best move by searching
     forward all the way to the terminal states. [Figure 5.3]"""
-
+    global node_counter
+    node_counter = 1
     player = game.to_move(state)
 
-    def max_value(state):
-        if game.terminal_test(state):
+    def max_value(state, depth):
+        if game.terminal_test(state) or depth >= depth_limit:
             # print "max"
             # print state.pieces
             # print game.utility(state, player)
@@ -22,13 +24,13 @@ def minimax_decision(state, game):
         v = -infinity
         for a in game.actions(state):
             temp = v
-            v = max(v, min_value(game.result(state, a)))
+            v = max(v, min_value(game.result(state, a), depth + 1))
             # if temp < v:
             #     print a
         return v
 
-    def min_value(state):
-        if game.terminal_test(state):
+    def min_value(state, depth):
+        if game.terminal_test(state) or depth >= depth_limit:
             # print "min"
             # print state.pieces
             # print state.to_move
@@ -37,23 +39,34 @@ def minimax_decision(state, game):
         v = infinity
         for a in game.actions(state):
             temp = v
-            v = min(v, max_value(game.result(state, a)))
+            v = min(v, max_value(game.result(state, a), depth + 1))
             # if temp < v:
             #     print a
         return v
 
     # Body of minimax_decision:
     if game.terminal_test(state):
-        return game.utility(state, player)
+        min_action = None
+        farsighted = state.utility
+        myopic = state.utility
+        return (min_action, myopic, farsighted, node_counter)
     actions = game.actions(state)
     # print max(map(lambda a: min_value(game.result(state, a)), actions))
     if len(actions) > 0:
-        return max(map(lambda a: min_value(game.result(state, a)), actions))
+        # return max(map(lambda a: min_value(game.result(state, a), 0), actions))
         # return max(actions,
         #            key=lambda a: min_value(game.result(state, a)))
-    else:
-        return game.utility(state, player)
-
+        myopic = - infinity
+        farsighted = - infinity
+        min_action = None
+        for a in actions:
+            result_state = game.result(state, a)
+            result = min_value(result_state, 1)  # min is the first layer
+            if result > farsighted:
+                farsighted = result
+                min_action = a
+                myopic = result_state.utility
+    return (min_action, myopic, farsighted, node_counter)
 
 # ______________________________________________________________________________
 
@@ -208,6 +221,8 @@ class Chess(Game):
         return state.moves(state.to_move)
 
     def result(self, state, move_action):
+        global node_counter
+        node_counter = node_counter + 1
         new_pieces = []
         '''
           if move_action == NOOP:
@@ -339,7 +354,7 @@ class GameState:
                     action_list.append(action_name)
                 if right_up[0] >= 0 and right_up[1] < 8 and right_up_up[0] >= 0 and right_up_up[1] < 8 and \
                         pieces_map.get(right_up) is not None and pieces_map.get(right_up)[0].type == 'C' \
-                        and (pieces_map.get(right_up_up) is None or right_up_up[0] == 0 and pieces_map.get(left_up_up)[0].type == 'S'):
+                        and (pieces_map.get(right_up_up) is None or right_up_up[0] == 0 and pieces_map.get(right_up_up)[0].type == 'S'):
                     action_name = (coor, right_up_up)
                     action_list.append(action_name)
             if p.type == 'C':
