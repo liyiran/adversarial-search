@@ -68,6 +68,7 @@ def minimax_decision(state, game, depth_limit=infinity):
                 myopic = result_state.utility
     return (min_action, myopic, farsighted, node_counter)
 
+
 # ______________________________________________________________________________
 
 
@@ -297,6 +298,30 @@ class Chess(Game):
             else:
                 utility_value -= utility
         return utility_value
+
+    def coor_to_letter(self, coor):
+        x = coor[0]
+        y = coor[1] + 1
+        return chr((ord('H') - x)) + str(y)
+
+    def translate(self, utility):
+        op = utility[0]
+        myopic = utility[1]
+        farsighted = utility[2]
+        node = utility[3]
+        result = ''
+        if op is (None):
+            result += 'pass\n'
+        else:
+            result += self.coor_to_letter(op[0]) + '-' + self.coor_to_letter(op[1]) + '\n'
+        result += str(myopic) + '\n'
+        result += str(farsighted) + '\n'
+        result += str(node) + '\n'
+        return result
+
+    def write_to_file(self, string, path='output.txt'):
+        with open(path, 'a') as the_file:
+            the_file.write(string)
 
 
 class GameState:
