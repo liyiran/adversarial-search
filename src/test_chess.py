@@ -320,3 +320,57 @@ S1,0,S1,0,S1,0,S1,0
         self.assertEqual(368, utility1[1])  # myopic
         self.assertEqual(368, utility1[2])
         self.assertGreater(5, utility1[3])
+
+    def test_translate(self):
+        configuration1 = Configuration(path=None)
+        configuration1.generate_configuration_from_string(
+            """Star
+MINIMAX
+7
+0,C1,0,C1,0,C1,0,C1
+C1,0,C1,0,C1,0,C1,0
+0,S1,0,S1,0,S1,0,S1
+S1,0,S1,0,S1,0,S1,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+10,20,30,40,52,70,90,1000
+            """)
+        chess1 = Chess(path=None, configuration=configuration1)
+        utility = (((1, 0), (0, 1)), 130, 90, 26)
+        self.assertEqual("""G1-H2
+130
+90
+26
+""", chess1.translate(utility))
+
+    def test_translate_no_action(self):
+        configuration1 = Configuration(path=None)
+        configuration1.generate_configuration_from_string(
+            """Star
+MINIMAX
+7
+0,C1,0,C1,0,C1,0,C1
+C1,0,C1,0,C1,0,C1,0
+0,S1,0,S1,0,S1,0,S1
+S1,0,S1,0,S1,0,S1,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+10,20,30,40,52,70,90,1000
+            """)
+        chess1 = Chess(path=None, configuration=configuration1)
+        utility = ((None), 130, 90, 26)
+        self.assertEqual("""pass
+130
+90
+26
+""", chess1.translate(utility))
+
+    def test_integration_test1(self):
+        chess = Chess(path="../res/test_case_1.txt", configuration=None)
+        result = chess.translate(minimax_decision(game=chess, state=chess.initial_state, depth_limit=chess.config.depth_limit))
+        self.assertEqual("F4-H2\n160\n160\n5\n", result)
+        chess.write_to_file(result)
