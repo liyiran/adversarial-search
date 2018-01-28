@@ -3,6 +3,7 @@ from collections import namedtuple
 # ______________________________________________________________________________
 # Minimax Search
 infinity = float('inf')
+NOOP = 'Noop'
 
 
 def minimax_decision(state, game):
@@ -13,23 +14,45 @@ def minimax_decision(state, game):
 
     def max_value(state):
         if game.terminal_test(state):
+            # print "max"
+            # print state.pieces
+            # print game.utility(state, player)
+            # print state.to_move
             return game.utility(state, player)
         v = -infinity
         for a in game.actions(state):
+            temp = v
             v = max(v, min_value(game.result(state, a)))
+            # if temp < v:
+            #     print a
         return v
 
     def min_value(state):
         if game.terminal_test(state):
+            # print "min"
+            # print state.pieces
+            # print state.to_move
+            # print game.utility(state, player)
             return game.utility(state, player)
         v = infinity
         for a in game.actions(state):
+            temp = v
             v = min(v, max_value(game.result(state, a)))
+            # if temp < v:
+            #     print a
         return v
 
     # Body of minimax_decision:
-    return max(game.actions(state),
-               key=lambda a: min_value(game.result(state, a)))
+    if game.terminal_test(state):
+        return game.utility(state, player)
+    actions = game.actions(state)
+    # print max(map(lambda a: min_value(game.result(state, a)), actions))
+    if len(actions) > 0:
+        return max(map(lambda a: min_value(game.result(state, a)), actions))
+        # return max(actions,
+        #            key=lambda a: min_value(game.result(state, a)))
+    else:
+        return game.utility(state, player)
 
 
 # ______________________________________________________________________________
@@ -152,7 +175,9 @@ class Game:
 
     def terminal_test(self, state):
         """Return True if this is a final state for the game."""
-        return not self.actions(state)
+        my_action = state.moves(state.to_move)
+        other_action = state.moves(state.to_move == 'S' and 'C' or 'S')
+        return state.is_only_one_play() or (my_action == [NOOP] and other_action == [NOOP])
 
     def to_move(self, state):
         """Return the player whose move it is in this state."""
@@ -180,13 +205,49 @@ class Game:
 class Chess(Game):
 
     def actions(self, state):
-        return state.moves()
+        return state.moves(state.to_move)
 
-    def result(self, state, move):
-        pass
+    def result(self, state, move_action):
+        new_pieces = []
+        '''
+          if move_action == NOOP:
+            for p in state.pieces:
+                new_piece = Piece(type=p.type, coor=p.coor)
+                new_pieces.append(new_piece)
+            return GameState(to_move=state.to_move == 'S' and 'C' or 'S', utility=state.utility, pieces=new_pieces, row_values=self.config.row_values)
+        '''
+        if move_action == NOOP:
+            new_state = state
+            new_state.to_move = state.to_move == 'S' and 'C' or 'S'
+            return new_state
+        move = None
+        original = move_action[0]
+        destination = move_action[1]
+        eaten = None
+        if original[0] - destination[0] == 2 and original[1] - destination[1] == 2:
+            eaten = (original[0] - 1, original[1] - 1)
+        if original[0] - destination[0] == -2 and original[1] - destination[1] == 2:
+            eaten = (original[0] + 1, original[1] - 1)
+        if original[0] - destination[0] == 2 and original[1] - destination[1] == -2:
+            eaten = (original[0] - 1, original[1] + 1)
+        if original[0] - destination[0] == -2 and original[1] - destination[1] == -2:
+            eaten = (original[0] + 1, original[1] + 1)
+        for p in state.pieces:
+            if p.coor == original:
+                new_piece = Piece(type=p.type, coor=destination)
+                move = p.type
+                new_pieces.append(new_piece)
+            elif p.coor == eaten:
+                pass
+            else:
+                new_piece = Piece(type=p.type, coor=p.coor)
+                new_pieces.append(new_piece)
+        to_move = move == 'S' and 'C' or 'S'
+        utility = Chess.evaluation(new_pieces, self.config.player, self.config.row_values)
+        return GameState(to_move=to_move, utility=utility, pieces=new_pieces, row_values=self.config.row_values)
 
     def utility(self, state, player):
-        return self.evaluation(state.pieces, player, self.config.row_values)
+        return state.utility
 
     def __init__(self, path, configuration):
         if configuration:
@@ -203,7 +264,7 @@ class Chess(Game):
                     for k in range(number):
                         piece = Piece(map[i][j][0], (i, j))
                         pieces.append(piece)
-        utility = Chess.evaluation(pieces, to_move, self.config.row_values)
+        utility = Chess.evaluation(pieces, self.config.player, self.config.row_values)
         game_state = GameState(to_move=to_move, utility=utility, pieces=pieces, row_values=self.config.row_values)
         self.initial_state = game_state
 
@@ -230,15 +291,23 @@ class GameState:
         self.pieces = pieces
         self.row_values = row_values
 
-    def moves(self):
-        player = self.to_move
+    def is_only_one_play(self):
+        type = None
+        for p in self.pieces:
+            if not type:
+                type = p.type
+            elif type != p.type:
+                return False
+        return True
+
+    def moves(self, player):
         pieces = filter(lambda p: p.type == player, self.pieces)
         action_list = []
         pieces_map = dict()
         for p in self.pieces:
             coor = p.coor
             piece_list = pieces_map.get(coor)
-            if piece_list == None:
+            if piece_list is None:
                 pieces_map[coor] = [p]
             else:
                 piece_list.append(p)
@@ -257,18 +326,20 @@ class GameState:
                      0 0
                       S
                 '''
-                if left_up[0] >= 0 and left_up[0] >= 0 and pieces_map.get(left_up) is None:
+                if left_up[0] >= 0 and left_up[1] >= 0 and (pieces_map.get(left_up) is None or (left_up[0] == 0 and pieces_map.get(left_up)[0].type == 'S')):
                     action_name = (coor, left_up)
                     action_list.append(action_name)
-                if right_up[0] >= 0 and right_up[1] < 8 and pieces_map.get(right_up) is None:
+                if right_up[0] >= 0 and right_up[1] < 8 and (pieces_map.get(right_up) is None or right_up[0] == 0 and pieces_map.get(right_up)[0].type == 'S'):
                     action_name = (coor, right_up)
                     action_list.append(action_name)
                 if left_up[0] >= 0 and left_up[0] >= 0 and left_up_up[0] >= 0 and left_up_up[1] >= 0 and \
-                        pieces_map.get(left_up) is not None and pieces_map.get(left_up)[0].type == 'C' and (pieces_map.get(left_up_up) is None or pieces_map.get(left_up_up)[0].type == 'S'):
+                        pieces_map.get(left_up) is not None and pieces_map.get(left_up)[0].type == 'C' \
+                        and (pieces_map.get(left_up_up) is None or left_up_up[0] == 0 and pieces_map.get(left_up_up)[0].type == 'S'):
                     action_name = (coor, left_up_up)
                     action_list.append(action_name)
                 if right_up[0] >= 0 and right_up[1] < 8 and right_up_up[0] >= 0 and right_up_up[1] < 8 and \
-                        pieces_map.get(right_up) is not None and pieces_map.get(right_up)[0].type == 'C' and (pieces_map.get(right_up_up) is None or pieces_map.get(left_up_up)[0].type == 'S'):
+                        pieces_map.get(right_up) is not None and pieces_map.get(right_up)[0].type == 'C' \
+                        and (pieces_map.get(right_up_up) is None or right_up_up[0] == 0 and pieces_map.get(left_up_up)[0].type == 'S'):
                     action_name = (coor, right_up_up)
                     action_list.append(action_name)
             if p.type == 'C':
@@ -276,20 +347,28 @@ class GameState:
                     C
                    0 0
                 '''
-                if left_down[0] < 8 and left_down[1] >= 0 and pieces_map.get(left_down) is None:
+                if left_down[0] < 8 and left_down[1] >= 0 and (pieces_map.get(left_down) is None or left_down[0] == 7 and pieces_map.get(left_down)[0].type == 'C'):
                     action_name = (coor, left_down)
                     action_list.append(action_name)
-                if right_down[0] < 8 and right_down[1] < 8 and pieces_map.get(right_down) is None:
+                if right_down[0] < 8 and right_down[1] < 8 and (pieces_map.get(right_down) is None or right_down[0] == 7 and pieces_map.get(right_down)[0].type == 'C'):
                     action_name = (coor, right_down)
                     action_list.append(action_name)
                 if left_down[0] < 8 and left_down[1] >= 0 and left_down_down[0] < 8 and left_down_down[1] >= 0 and \
-                        pieces_map.get(left_down) is not None and pieces_map.get(left_down)[0].type == 'S' and (pieces_map.get(left_down_down) is None or pieces_map.get(left_down_down)[0].type == 'C'):
+                        pieces_map.get(left_down) is not None and pieces_map.get(left_down)[0].type == 'S' and \
+                        (pieces_map.get(left_down_down) is None or left_down_down[0] == 7 and pieces_map.get(left_down_down)[0].type == 'C'):
                     action_name = (coor, left_down_down)
                     action_list.append(action_name)
-                if right_down[0] < 8 and right_down[1] <= 8 and right_down_down[0] < 8 and right_down_down[1] < 8 and \
-                        pieces_map.get(right_down) is not None and pieces_map.get(right_down)[0].type == 'S' and (pieces_map.get(right_down_down) is None or pieces_map.get(right_down_down)[0].type == 'C'):
+                if right_down[0] < 8 and right_down[1] < 8 and right_down_down[0] < 8 and right_down_down[1] < 8 and \
+                        pieces_map.get(right_down) is not None and pieces_map.get(right_down)[0].type == 'S' \
+                        and (pieces_map.get(right_down_down) is None or right_down_down[0] == 7 and pieces_map.get(right_down_down)[0].type == 'C'):
                     action_name = (coor, right_down_down)
                     action_list.append(action_name)
+        if len(action_list) == 0:
+            action_list.append(NOOP)
+        # print self.pieces
+        # print player
+        # print action_list
+        # print '--------'
         return action_list
 
 
