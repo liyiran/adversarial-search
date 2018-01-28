@@ -1,12 +1,10 @@
-import random
 from collections import Counter
 from collections import namedtuple
 from copy import deepcopy
 
 infinity = float('inf')
-GameState = namedtuple('GameState', 'to_move, utility, board, moves')
 Action = namedtuple('Action', 'action_name, new_state')
-'''
+
 
 # ______________________________________________________________________________
 # Minimax Search
@@ -35,13 +33,11 @@ def minimax_decision(state, game):
         return v
 
     # Body of minimax_decision:
-    return argmax(game.actions(state),
-                  key=lambda a: min_value(game.result(state, a)))
+    return max(game.actions(state),
+               key=lambda a: min_value(game.result(state, a)))
 
 
 # ______________________________________________________________________________
-
-'''
 
 
 def alphabeta_search(state, game):
@@ -133,37 +129,6 @@ def alphabeta_cutoff_search(state, game, d=4, cutoff_test=None, eval_fn=None):
     return best_action
 
 
-# ______________________________________________________________________________
-# Players for Games
-
-
-def query_player(game, state):
-    """Make a move by querying standard input."""
-    print("current state:")
-    game.display(state)
-    print("available moves: {}".format(game.actions(state)))
-    print("")
-    move_string = input('Your move? ')
-    try:
-        move = eval(move_string)
-    except NameError:
-        move = move_string
-    return move
-
-
-def random_player(game, state):
-    """A player that chooses a legal move at random."""
-    return random.choice(game.actions(state))
-
-
-def alphabeta_player(game, state):
-    return alphabeta_search(state, game)
-
-
-# ______________________________________________________________________________
-# Some Sample Games
-
-
 class Game:
     """A game is similar to a problem, but it has a utility for each
     state and a terminal test instead of a path cost and a goal
@@ -212,22 +177,6 @@ class Game:
                     return self.utility(state, self.to_move(self.initial))
 
 
-class Chess(Game):
-
-    def result(self, state, move):
-        pass
-
-    def actions(self, state):
-        Utility.action(state.board, state.to_move)
-
-    def __init__(self, path):
-        self.conf = Configuration(path=path)
-        self.initial = GameState(to_move=self.conf.player, utility=self.conf.initial_state.evaluation(self.conf), board=self.conf.initial_state, moves=Utility.action(self.conf.initial_state, self.conf.player))
-
-    def utility(self, state, player):
-        state.board.evaluation(player)
-
-
 class Configuration:
     def __init__(self, path):
         if path:
@@ -270,16 +219,14 @@ class Board:
     def is_only_one_play(self):
         return len(Counter(map(lambda p: p.type, self.pieces)).keys()) == 1
 
-    def evaluation(self, config, player):
-        if not player:
-            player = config.player
+    def evaluation(self, row_values, player):
         utility_value = 0
         for piece in self.pieces:
             row = piece.coor[0]
             if piece.type == "S":
-                utility = config.row_values[7 - row]
+                utility = row_values[7 - row]
             else:
-                utility = config.row_values[row]
+                utility = row_values[row]
             if piece.type == player:
                 utility_value += utility
             else:
@@ -334,26 +281,32 @@ class Utility:
     def right_up_up(coor):
         return coor[0] - 2, coor[1] + 2
 
-    @staticmethod
-    def result(self, state, move):
-        pass
 
-    @staticmethod
-    def move_piece(board, coor, old_piece):
+class GameState:
+    def __init__(self, to_move, utility, board, row_values):
+        self.to_move = to_move
+        self.utility = utility
+        self.board = board
+        self.row_values = row_values
+
+    def move_piece(self, board, coor, old_piece):
         new_board = deepcopy(board)
         new_board.map[old_piece.coor[0]][old_piece.coor[1]] = '0'
         position = new_board.map[coor[0]][coor[1]]
         if position == '0':
-            new_board.map[coor[0]][coor[1]] = old_piece.type
+            new_board.map[coor[0]][coor[1]] = old_piece.type + '1'
         else:
             new_board.map[coor[0]][coor[1]] = old_piece.type + str(int(position[1:]) + 1)
         piece = deepcopy(old_piece)
         piece.coor = coor
         new_board.pieces = filter(lambda p: p.coor != coor, board.pieces).append(piece)
-        return new_board
+        to_move = old_piece.type == 'S' and 'C' or 'S'
+        new_state = GameState(to_move=to_move, utility=new_board.evaluation(self.row_values, to_move), board=new_board)
+        return new_state
 
-    @staticmethod
-    def action(board, player):
+    def moves(self):
+        player = self.to_move
+        board = self.board
         pieces = filter(lambda p: p.type == player, board.pieces)
         action_list = []
         for p in pieces:
@@ -370,20 +323,21 @@ class Utility:
                 if board.get_element(left_down) == '0' or board.on_boarder(left_down):  # left down corner
                     # action should be a tuple,(action name, new board)
                     action_name = (coor, left_down)
-                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, left_down, p)))
+
+                    action_list.append(Action(action_name=action_name, new_state=self.move_piece(board, left_down, p)))
 
                 if board.get_element(right_down) == '0' or board.on_boarder(right_down):  # right down corner
                     action_name = (coor, right_down)
-                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, right_down, p)))
+                    action_list.append(Action(action_name=action_name, new_state=self.move_piece(board, right_down, p)))
 
                 left_down_down = Utility.left_down_down(coor)
                 if "S" in board.get_element(left_down) and (board.get_element(left_down_down) == '0' or board.on_boarder(left_down_down)):  # eat and jump
                     action_name = (coor, left_down_down)
-                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, left_down_down, p)))  # left eat down
+                    action_list.append(Action(action_name=action_name, new_state=self.move_piece(board, left_down_down, p)))  # left eat down
                 right_down_down = Utility.right_down_down(coor)
                 if "S" in board.get_element(right_down) and (board.get_element(right_down_down) == '0' or board.on_boarder(right_down_down)):  # eat and jump
                     action_name = (coor, right_down_down)
-                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, right_down_down, p)))  # right eat down
+                    action_list.append(Action(action_name=action_name, new_state=self.move_piece(board, right_down_down, p)))  # right eat down
             if player == "S":
                 '''
                        0 0
@@ -391,16 +345,31 @@ class Utility:
                 '''
                 if board.get_element(left_up) == '0' or board.on_boarder(left_up):
                     action_name = (coor, left_up)
-                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, left_up, p)))
+                    action_list.append(Action(action_name=action_name, new_state=self.move_piece(board, left_up, p)))
                 if board.get_element(right_up) == '0' or board.on_boarder(right_up):
                     action_name = (coor, right_up)
-                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, right_up, p)))
+                    action_list.append(Action(action_name=action_name, new_state=self.move_piece(board, right_up, p)))
                 left_up_up = Utility.left_up_up(coor)
                 if "C" in board.get_element(left_up) and (board.get_element(left_up_up) == '0' or board.on_boarder(left_up_up)):
                     action_name = (coor, left_up_up)
-                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, left_up_up, p)))
+                    action_list.append(Action(action_name=action_name, new_state=self.move_piece(board, left_up_up, p)))
                 right_up_up = Utility.right_up_up(coor)
                 if "C" in board.get_element(right_up) and (board.get_element(right_up_up) == '0' or board.on_boarder(right_up_up)):
                     action_name = (coor, right_up_up)
-                    action_list.append(Action(action_name=action_name, new_state=Utility.move_piece(board, right_up_up, p)))
+                    action_list.append(Action(action_name=action_name, new_state=self.move_piece(board, right_up_up, p)))
         return action_list
+
+
+class Chess(Game):
+    def actions(self, state):
+        return state.moves()
+
+    def __init__(self, path):
+        self.conf = Configuration(path=path)
+        self.initial = GameState(to_move=self.conf.player, utility=self.conf.initial_state.evaluation(self.conf.row_values, self.conf.player), board=self.conf.initial_state, row_values=self.conf.row_values)
+
+    def utility(self, state, player):
+        return state.utility
+
+    def result(self, state, move):
+        return move.new_state
