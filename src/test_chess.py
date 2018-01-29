@@ -57,6 +57,7 @@ MINIMAX
         self.assertEqual(utility1[1], utility2[1])
         self.assertEqual(utility1[2], utility2[2])
         self.assertGreaterEqual(utility1[3], utility2[3])
+
     #############################################
     def test_action_go_to_boarder(self):
         configuration1 = Configuration(path=None)
@@ -83,6 +84,89 @@ MINIMAX
         self.assertEqual(utility1[1], utility2[1])
         self.assertEqual(utility1[2], utility2[2])
         self.assertGreaterEqual(utility1[3], utility2[3])
+
+    def test_tie_break(self):
+        configuration1 = Configuration(path=None)
+        configuration1.generate_configuration_from_string(
+            """Star
+MINIMAX
+2
+0,0,0,0,0,0,0,0
+0,S1,0,0,0,0,0,0
+0,0,0,0,S1,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,C1,0
+10,20,30,40,50,60,70,80
+        """)
+        chess1 = Chess(path=None, configuration=configuration1)
+        utility1 = minimax_decision(chess1.initial_state, chess1)
+        self.assertEqual(((1, 1), (0, 0)), utility1[0])
+        self.assertEqual(80, utility1[2])
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, d=1024)
+        self.assertEqual(utility1[0], utility2[0])
+        # self.assertEqual(utility1[1], utility2[1])
+        # self.assertEqual(utility1[2], utility2[2])
+        # self.assertGreaterEqual(utility1[3], utility2[3])
+
+    def test_tie_break2(self):
+        configuration1 = Configuration(path=None)
+        configuration1.generate_configuration_from_string(
+            """Circle
+MINIMAX
+2
+0,0,0,0,0,0,0,S1
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,C1,0
+0,0,0,0,0,0,0,0
+10,20,30,40,50,60,70,80
+        """)
+        chess1 = Chess(path=None, configuration=configuration1)
+        utility1 = minimax_decision(chess1.initial_state, chess1)
+        self.assertEqual(((6, 6), (7, 5)), utility1[0])
+        # self.assertEqual(2 * 80 + 2 * 60 + 80, -utility1[2])
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, d=1024)
+        self.assertEqual(utility1[0], utility2[0])
+        # self.assertEqual(utility1[1], utility2[1])
+        # self.assertEqual(utility1[2], utility2[2])
+        # self.assertGreaterEqual(utility1[3], utility2[3])
+
+    @skip("heihei")
+    def test_pressure_test(self):
+        configuration1 = Configuration(path=None)
+        configuration1.generate_configuration_from_string(
+            """Circle
+MINIMAX
+10
+0,C1,0,C1,0,C1,0,C1
+C1,0,C1,0,C1,0,C1,0
+0,C1,0,C1,0,C1,0,C1
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+S1,0,S1,0,S1,0,S1,0
+0,S1,0,S1,0,S1,0,S1
+S1,0,S1,0,S1,0,S1,0
+10,20,30,40,50,60,70,80
+        """)
+        chess1 = Chess(path=None, configuration=configuration1)
+        utility1 = minimax_decision(chess1.initial_state, chess1, depth_limit=5)
+        # self.assertEqual(2 * 80 + 2 * 60, -utility1[2])
+        print utility1
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, d=5)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], utility2[3])
+
     #####################
     def test_action_go_to_boarder1(self):
         configuration1 = Configuration(path=None)
