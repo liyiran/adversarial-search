@@ -1,7 +1,9 @@
 from unittest import TestCase
+from unittest import skip
 
 from hw1cs561s2018_v2 import Chess
 from hw1cs561s2018_v2 import Configuration
+from hw1cs561s2018_v2 import alphabeta_cutoff_search
 from hw1cs561s2018_v2 import minimax_decision
 
 
@@ -44,11 +46,17 @@ MINIMAX
         """)
         chess1 = Chess(path=None, configuration=configuration1)
         utility1 = minimax_decision(chess1.initial_state, chess1)
-        self.assertEqual(None, utility1[0])  # min action
+        self.assertEqual(('Noop'), utility1[0])  # min action
         self.assertEqual(140, utility1[1])  # myopic
         self.assertEqual(140, utility1[2])  # farsighted
         self.assertEqual(1, utility1[3])  # total number
 
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, d=1024)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], utility2[3])
     #############################################
     def test_action_go_to_boarder(self):
         configuration1 = Configuration(path=None)
@@ -69,7 +77,12 @@ MINIMAX
         chess1 = Chess(path=None, configuration=configuration1)
         utility1 = minimax_decision(chess1.initial_state, chess1)
         self.assertEqual(2 * 80 + 2 * 60, -utility1[2])
-
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, d=1024)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], utility2[3])
     #####################
     def test_action_go_to_boarder1(self):
         configuration1 = Configuration(path=None)
@@ -90,7 +103,14 @@ S1,0,0,0,0,0,0,0
         chess1 = Chess(path=None, configuration=configuration1)
         utility1 = minimax_decision(chess1.initial_state, chess1)
         self.assertEqual(2 * 80 + 2 * 60 + 80, -utility1[2])
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, d=1024)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], utility2[3])
 
+    @skip("demonstrating skipping")
     def test_action_go_to_boarder4(self):
         configuration1 = Configuration(path=None)
         configuration1.generate_configuration_from_string(
@@ -108,8 +128,16 @@ C1,0,0,0,0,0,0,0
 10,20,30,40,50,60,70,80
     """)
         chess1 = Chess(path=None, configuration=configuration1)
-        utility1 = minimax_decision(chess1.initial_state, chess1)
-        self.assertEqual(80, -utility1[2])
+        # utility1 = minimax_decision(chess1.initial_state, chess1)
+        # self.assertEqual(80, -utility1[2])
+
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, d=1024)
+        self.assertEqual(-80, utility2[2])
+        # self.assertEqual(utility1[0], utility2[0])
+        # self.assertEqual(utility1[1], utility2[1])
+        # self.assertEqual(utility1[2], utility2[2])
+        # self.assertGreaterEqual(utility1[3], utility2[3])
 
     ########################################
     def test_actions(self):
@@ -252,6 +280,13 @@ MINIMAX
         self.assertEqual(160, utility1[2])
         self.assertEqual(5, utility1[3])
 
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, configuration1.depth_limit)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], utility2[3])
+
     def test_depth_limit2(self):
         configuration1 = Configuration(path=None)
         configuration1.generate_configuration_from_string(
@@ -275,28 +310,40 @@ S1,0,0,0,0,0,0,0
         self.assertEqual(90, utility1[2])
         self.assertEqual(26, utility1[3])
 
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, configuration1.depth_limit)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], utility2[3])
+
     def test_depth_limit3(self):
         configuration1 = Configuration(path=None)
         configuration1.generate_configuration_from_string(
             """Circle
-    MINIMAX
-    2
-    0,S1,0,0,0,0,0,0
-    S1,0,0,0,0,0,0,0
-    0,0,0,0,0,0,0,C1
-    0,0,0,0,0,0,S1,0
-    0,0,0,0,0,S1,0,0
-    0,0,0,0,0,0,0,0
-    0,0,0,0,0,0,0,0
-    0,0,0,0,0,0,0,0
-    10,20,30,40,50,60,70,80
-            """)
+MINIMAX
+2
+0,S2,0,0,0,0,0,0
+S1,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,C1
+0,0,0,0,0,0,S1,0
+0,0,0,0,0,S1,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+10,20,30,40,50,60,70,80""")
         chess1 = Chess(path=None, configuration=configuration1)
         utility1 = minimax_decision(chess1.initial_state, chess1, configuration1.depth_limit)
-        self.assertEqual((None), utility1[0])
+        self.assertEqual('Noop', utility1[0])
         self.assertEqual(-290, utility1[1])  # myopic
         self.assertEqual(-300, utility1[2])
         self.assertEqual(5, utility1[3])
+        chess1.initial_state.to_move = configuration1.player
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, configuration1.depth_limit)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], utility2[3])
 
     def test_depth_limit4(self):
         configuration1 = Configuration(path=None)
@@ -316,10 +363,16 @@ S1,0,S1,0,S1,0,S1,0
             """)
         chess1 = Chess(path=None, configuration=configuration1)
         utility1 = minimax_decision(chess1.initial_state, chess1, configuration1.depth_limit)
-        self.assertEqual((None), utility1[0])
+        self.assertEqual((('Noop')), utility1[0])
         self.assertEqual(368, utility1[1])  # myopic
         self.assertEqual(368, utility1[2])
-        self.assertGreater(5, utility1[3])
+        self.assertGreaterEqual(utility1[3], 3)
+
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, configuration1.depth_limit)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], utility2[3])
 
     def test_translate(self):
         configuration1 = Configuration(path=None)
@@ -359,10 +412,9 @@ S1,0,S1,0,S1,0,S1,0
 0,0,0,0,0,0,0,0
 0,0,0,0,0,0,0,0
 0,0,0,0,0,0,0,0
-10,20,30,40,52,70,90,1000
-            """)
+10,20,30,40,52,70,90,1000""")
         chess1 = Chess(path=None, configuration=configuration1)
-        utility = ((None), 130, 90, 26)
+        utility = (('Noop'), 130, 90, 26)
         self.assertEqual("""pass
 130
 90
