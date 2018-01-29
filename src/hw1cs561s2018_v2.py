@@ -448,3 +448,17 @@ class Utility:
     @staticmethod
     def right_up_up(coor):
         return coor[0] - 2, coor[1] + 2
+
+
+def main():
+    chess = Chess(path="../res/input5.txt", configuration=None)
+    if chess.config.algorithm == 'MINIMAX':
+        result = minimax_decision(game=chess, state=chess.initial_state, depth_limit=chess.config.depth_limit)
+    else:
+        result = alphabeta_cutoff_search(game=chess, state=chess.initial_state, d=chess.config.depth_limit)
+    string = chess.translate(result)
+    chess.write_to_file(string=string, path="../res/output5_my.txt")
+
+
+if __name__ == "__main__":
+    main()
