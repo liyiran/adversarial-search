@@ -1,10 +1,10 @@
 from unittest import TestCase
 from unittest import skip
 
-from hw1cs561s2018_v2 import Chess
-from hw1cs561s2018_v2 import Configuration
-from hw1cs561s2018_v2 import alphabeta_cutoff_search
-from hw1cs561s2018_v2 import minimax_decision
+from hw1cs561s2018 import Chess
+from hw1cs561s2018 import Configuration
+from hw1cs561s2018 import alphabeta_cutoff_search
+from hw1cs561s2018 import minimax_decision
 
 
 class TestChess(TestCase):
@@ -194,7 +194,7 @@ S1,0,0,0,0,0,0,0
         self.assertEqual(utility1[2], utility2[2])
         self.assertGreaterEqual(utility1[3], utility2[3])
 
-    @skip("demonstrating skipping")
+    # @skip("demonstrating skipping")
     def test_action_go_to_boarder4(self):
         configuration1 = Configuration(path=None)
         configuration1.generate_configuration_from_string(

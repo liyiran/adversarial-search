@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-from hw1cs561s2018_v2 import Chess
-from hw1cs561s2018_v2 import Configuration
-from hw1cs561s2018_v2 import alphabeta_cutoff_search
+from hw1cs561s2018 import Chess
+from hw1cs561s2018 import Configuration
+from hw1cs561s2018 import alphabeta_cutoff_search
 
 
 class TestAlphabeta_search(TestCase):
