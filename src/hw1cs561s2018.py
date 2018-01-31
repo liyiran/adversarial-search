@@ -42,6 +42,14 @@ def minimax_decision(state, game, depth_limit=infinity):
             #     print a
         return v
 
+    if game.terminal_test(state):
+        min_action = 'Noop'
+        farsighted = state.utility
+        myopic = state.utility
+        if state.is_only_one_play():
+            return min_action, myopic, farsighted, 1
+        else:
+            return min_action, myopic, farsighted, 3
     actions = game.actions(state)
     # print max(map(lambda a: min_value(game.result(state, a)), actions))
     if len(actions) > 0:
@@ -166,7 +174,8 @@ class Chess(Game):
     def result(self, state, move_action):
         global node_counter
         node_counter = node_counter + 1
-        new_pieces = []
+        new_s_pieces = []
+        new_c_pieces = []
         if move_action == NOOP:
             new_state = state
             if state.to_move == 'S':
@@ -187,19 +196,25 @@ class Chess(Game):
             eaten = (original[0] - 1, original[1] + 1)
         if original[0] - destination[0] == -2 and original[1] - destination[1] == -2:
             eaten = (original[0] + 1, original[1] + 1)
-        for p in state.pieces:
+        for p in state.s_pieces + state.c_pieces:
             if p.coor == original:
                 new_piece = Piece(type=p.type, coor=destination)
                 move = p.type
-                new_pieces.append(new_piece)
+                if p.type == 'S':
+                    new_s_pieces.append(new_piece)
+                else:
+                    new_c_pieces.append(new_piece)
             elif p.coor == eaten:
                 pass
             else:
                 new_piece = Piece(type=p.type, coor=p.coor)
-                new_pieces.append(new_piece)
+                if p.type == 'S':
+                    new_s_pieces.append(new_piece)
+                else:
+                    new_c_pieces.append(new_piece)
         to_move = move == 'S' and 'C' or 'S'
-        utility = Chess.evaluation(new_pieces, self.config.player, self.config.row_values)
-        return GameState(to_move=to_move, utility=utility, pieces=new_pieces, row_values=self.config.row_values)
+        utility = Chess.evaluation(s_pieces=new_s_pieces, c_pieces=new_c_pieces, player=self.config.player, row_values=self.config.row_values)
+        return GameState(to_move=to_move, utility=utility, s_pieces=new_s_pieces, c_pieces=new_c_pieces, row_values=self.config.row_values)
 
     def utility(self, state, player):
         return state.utility
@@ -210,7 +225,8 @@ class Chess(Game):
         else:
             self.config = Configuration(path)
         to_move = self.config.player
-        pieces = []
+        s_pieces = []
+        c_pieces = []
         map = self.config.initial_map
         for i in range(len(map)):
             for j in range(len(map[i])):
@@ -218,21 +234,28 @@ class Chess(Game):
                     number = int(map[i][j][1:])
                     for k in range(number):
                         piece = Piece(map[i][j][0], (i, j))
-                        pieces.append(piece)
-        utility = Chess.evaluation(pieces, self.config.player, self.config.row_values)
-        game_state = GameState(to_move=to_move, utility=utility, pieces=pieces, row_values=self.config.row_values)
+                        if "S" in map[i][j]:
+                            s_pieces.append(piece)
+                        else:
+                            c_pieces.append(piece)
+        utility = Chess.evaluation(s_pieces, c_pieces, self.config.player, self.config.row_values)
+        game_state = GameState(to_move=to_move, utility=utility, s_pieces=s_pieces, c_pieces=c_pieces, row_values=self.config.row_values)
         self.initial_state = game_state
 
     @staticmethod
-    def evaluation(pieces, player, row_values):
+    def evaluation(s_pieces, c_pieces, player, row_values):
         utility_value = 0
-        for piece in pieces:
+        for piece in s_pieces:
             row = piece.coor[0]
-            if piece.type == "S":
-                utility = row_values[7 - row]
+            utility = row_values[7 - row]
+            if 'S' == player:
+                utility_value += utility
             else:
-                utility = row_values[row]
-            if piece.type == player:
+                utility_value -= utility
+        for piece in c_pieces:
+            row = piece.coor[0]
+            utility = row_values[row]
+            if 'C' == player:
                 utility_value += utility
             else:
                 utility_value -= utility
@@ -264,28 +287,28 @@ class Chess(Game):
 
 
 class GameState:
-    def __init__(self, to_move, utility, pieces, row_values, s_no_move=False, c_no_move=False):
+    def __init__(self, to_move, utility, s_pieces, c_pieces, row_values, s_no_move=False, c_no_move=False):
         self.to_move = to_move
         self.utility = utility
-        self.pieces = pieces
+        self.s_pieces = s_pieces
+        self.c_pieces = c_pieces
         self.row_values = row_values
         self.s_no_move = s_no_move
         self.c_no_move = c_no_move
 
     def is_only_one_play(self):
-        type = None
-        for p in self.pieces:
-            if not type:
-                type = p.type
-            elif type != p.type:
-                return False
-        return True
+        return (not self.c_pieces) != (not self.s_pieces)
 
     def moves(self, player):
-        pieces = filter(lambda p: p.type == player, self.pieces)
+        if self.is_only_one_play():
+            return [NOOP]
+        if player == 'S':
+            pieces = self.s_pieces
+        else:
+            pieces = self.c_pieces
         action_list = []
         pieces_map = dict()
-        for p in self.pieces:
+        for p in self.s_pieces + self.c_pieces:
             coor = p.coor
             piece_list = pieces_map.get(coor)
             if piece_list is None:
