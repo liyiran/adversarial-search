@@ -9,7 +9,7 @@ make a decision of a chess game.
 Python 2.7
 
 ## Running the tests
-
+[![Build Status](https://travis-ci.org/liyiran/adversarial-search.svg?branch=master)](https://travis-ci.org/liyiran/adversarial-search)
 This project is based on TDD pattern and there are 3 test class covering 
 the core functionality
 
