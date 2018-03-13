@@ -1,8 +1,6 @@
 from unittest import TestCase
 
-from hw1cs561s2018 import Chess
-from hw1cs561s2018 import Configuration
-from hw1cs561s2018 import alphabeta_cutoff_search
+from hw1cs561s2018 import Chess, Configuration, alphabeta_cutoff_search
 
 
 class TestAlphabeta_search(TestCase):
@@ -54,22 +52,23 @@ S1,0,0,0,0,0,0,0
     def test_alphabeta_3(self):
         configuration1 = Configuration(path=None)
         configuration1.generate_configuration_from_string(
-            """Star
-MINIMAX
-7
-0,C1,0,C1,0,C1,0,C1
-C1,0,C1,0,C1,0,C1,0
-0,S1,0,S1,0,S1,0,S1
+            """Circle
+ALPHABETA
+10
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,C1,0,0,0
+0,0,0,0,0,0,0,0
 S1,0,S1,0,S1,0,S1,0
 0,0,0,0,0,0,0,0
 0,0,0,0,0,0,0,0
-0,0,0,0,0,0,0,0
-0,0,0,0,0,0,0,0
-10,20,30,40,52,70,90,1000
+10,20,30,40,50,200,250,300
             """)
         chess1 = Chess(path=None, configuration=configuration1)
         utility1 = alphabeta_cutoff_search(chess1.initial_state, chess1, configuration1.depth_limit)
-        self.assertEqual((('Noop')), utility1[0])
-        self.assertEqual(368, utility1[1])  # myopic
-        self.assertEqual(368, utility1[2])
-        self.assertEqual(3, utility1[3])
+        print(chess1.translate(utility1))
+        # self.assertEqual((('Noop')), utility1[0])
+        # self.assertEqual(368, utility1[1])  # myopic
+        # self.assertEqual(368, utility1[2])
+        # self.assertEqual(3, utility1[3])

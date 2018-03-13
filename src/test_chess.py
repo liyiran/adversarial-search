@@ -1,10 +1,6 @@
-from unittest import TestCase
-from unittest import skip
+from unittest import TestCase, skip
 
-from hw1cs561s2018 import Chess
-from hw1cs561s2018 import Configuration
-from hw1cs561s2018 import alphabeta_cutoff_search
-from hw1cs561s2018 import minimax_decision
+from hw1cs561s2018 import Chess, Configuration, alphabeta_cutoff_search, minimax_decision
 
 
 class TestChess(TestCase):
@@ -139,7 +135,7 @@ MINIMAX
         # self.assertEqual(utility1[2], utility2[2])
         # self.assertGreaterEqual(utility1[3], utility2[3])
 
-    # @skip("heihei")
+    @skip("heihei")
     def test_pressure_test(self):
         configuration1 = Configuration(path=None)
         configuration1.generate_configuration_from_string(
@@ -457,6 +453,64 @@ S1,0,S1,0,S1,0,S1,0
         self.assertEqual(utility1[1], utility2[1])
         self.assertEqual(utility1[2], utility2[2])
         self.assertGreaterEqual(utility1[3], utility2[3])
+
+    def test_tie_break_star(self):
+        configuration1 = Configuration(path=None)
+        configuration1.generate_configuration_from_string(
+            """Star
+MINIMAX
+7
+0,0,0,0,0,0,0,0
+0,S1,0,0,0,S1,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,C1
+10,20,30,40,52,70,90,1000
+            """)
+        chess1 = Chess(path=None, configuration=configuration1)
+        utility1 = minimax_decision(chess1.initial_state, chess1, 1024)
+        self.assertEqual((((1, 1), (0, 0))), utility1[0])
+        self.assertEqual(1000 + 90 - 1000, utility1[1])  # myopic
+        self.assertEqual(1000, utility1[2])
+        self.assertEqual(utility1[3], 33)
+
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, configuration1.depth_limit)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], 33)
+
+    def test_tie_break_circle(self):
+        configuration1 = Configuration(path=None)
+        configuration1.generate_configuration_from_string(
+            """Circle
+MINIMAX
+7
+0,0,0,0,0,0,S1,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0
+0,0,C1,0,0,C1,0,0
+0,0,0,0,0,0,0,0
+10,20,30,40,52,70,90,1000
+            """)
+        chess1 = Chess(path=None, configuration=configuration1)
+        utility1 = minimax_decision(chess1.initial_state, chess1, 1024)
+        self.assertEqual((((6, 2), (7, 1))), utility1[0])
+        self.assertEqual(1000 + 90 - 1000, utility1[1])  # myopic
+        self.assertEqual(1000, utility1[2])
+        self.assertEqual(utility1[3], 33)
+
+        utility2 = alphabeta_cutoff_search(chess1.initial_state, chess1, configuration1.depth_limit)
+        self.assertEqual(utility1[0], utility2[0])
+        self.assertEqual(utility1[1], utility2[1])
+        self.assertEqual(utility1[2], utility2[2])
+        self.assertGreaterEqual(utility1[3], 33)
 
     def test_translate(self):
         configuration1 = Configuration(path=None)

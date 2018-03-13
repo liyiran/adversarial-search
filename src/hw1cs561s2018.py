@@ -81,10 +81,10 @@ def alphabeta_cutoff_search(state, game, d=4, cutoff_test=None, eval_fn=None):
         for a in game.actions(state):
             v = max(v, min_value(game.result(state, a),
                                  alpha, beta, depth + 1))
-            if v >= beta:
+            if v >= beta[0]:
                 return v
             node_counter[0] += 1
-            alpha = max(alpha, v)
+            alpha[0] = max(alpha[0], v)
         return v
 
     def min_value(state, alpha, beta, depth):
@@ -94,10 +94,10 @@ def alphabeta_cutoff_search(state, game, d=4, cutoff_test=None, eval_fn=None):
         for a in game.actions(state):
             v = min(v, max_value(game.result(state, a),
                                  alpha, beta, depth + 1))
-            if v <= alpha:
+            if v <= alpha[0]:
                 return v
             node_counter[0] += 1
-            beta = min(beta, v)
+            beta[0] = min(beta[0], v)
         return v
 
     # Body of alphabeta_cutoff_search starts here:
@@ -106,8 +106,8 @@ def alphabeta_cutoff_search(state, game, d=4, cutoff_test=None, eval_fn=None):
                    (lambda state, depth: depth >= d or
                                          game.terminal_test(state)))
     eval_fn = eval_fn or (lambda state: game.utility(state, player))
-    best_score = -infinity
-    beta = infinity
+    alpha = [-infinity]
+    beta = [infinity]
     best_action = None
     myopic = None
     # Body of minimax_decision:
@@ -121,12 +121,12 @@ def alphabeta_cutoff_search(state, game, d=4, cutoff_test=None, eval_fn=None):
             return min_action, myopic, farsighted, 3
     for a in game.actions(state):
         result = game.result(state, a)
-        v = min_value(result, best_score, beta, 1)
-        if v > best_score:
-            best_score = v
+        v = min_value(result, alpha, beta, 1)
+        if v > alpha[0]:
+            alpha[0] = v
             best_action = a
             myopic = result.utility
-    return (best_action, myopic, best_score, node_counter[0])
+    return (best_action, myopic, alpha[0], node_counter[0])
 
 
 class Game:
